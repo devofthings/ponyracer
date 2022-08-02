@@ -4,11 +4,12 @@ import { By } from '@angular/platform-browser';
 import { RacesComponent } from './races.component';
 import { RaceComponent } from '../race/race.component';
 import { PonyComponent } from '../pony/pony.component';
+import { FromNowPipe } from '../from-now.pipe';
 
 describe('RacesComponent', () => {
   beforeEach(() =>
     TestBed.configureTestingModule({
-      declarations: [RacesComponent, RaceComponent, PonyComponent]
+      declarations: [RacesComponent, RaceComponent, PonyComponent, FromNowPipe]
     })
   );
 
