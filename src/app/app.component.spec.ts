@@ -11,24 +11,15 @@ import { FromNowPipe } from './from-now.pipe';
 describe('AppComponent', () => {
   beforeEach(() =>
     TestBed.configureTestingModule({
-      declarations: [
-        AppComponent,
-        MenuComponent,
-        RacesComponent,
-        RaceComponent,
-        PonyComponent,
-        FromNowPipe,
-      ],
+      declarations: [AppComponent, MenuComponent, RacesComponent, RaceComponent, PonyComponent, FromNowPipe]
     })
   );
 
-  it('should render title', () => {
+  it('should have a title', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.content span')?.textContent).toContain(
-      'ponyracer app is running!'
-    );
+    const element = fixture.nativeElement;
+    expect(element.querySelector('h1').textContent).withContext('You should have an `h1` with the text Ponyracer').toContain('Ponyracer');
   });
 
   it('should use the menu component', () => {
@@ -36,9 +27,7 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const element = fixture.debugElement;
     expect(element.query(By.directive(MenuComponent)))
-      .withContext(
-        'You probably forgot to add MenuComponent to the AppComponent template'
-      )
+      .withContext('You probably forgot to add MenuComponent to the AppComponent template')
       .not.toBeNull();
   });
 
@@ -47,9 +36,7 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const element = fixture.debugElement;
     expect(element.query(By.directive(RacesComponent)))
-      .withContext(
-        'You probably forgot to add RacesComponent to the AppComponent template'
-      )
+      .withContext('You probably forgot to add RacesComponent to the AppComponent template')
       .not.toBeNull();
   });
 });

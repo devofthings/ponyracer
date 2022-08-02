@@ -18,14 +18,10 @@
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
-            "assets": [
-              "src/favicon.ico",
-              "src/assets"
-            ],
-            "styles": [
-              "src/styles.css"
-            ],
-            "scripts": []
+            "assets": ["src/favicon.ico", "src/assets"],
+            "styles": ["src/styles.css"],
+            "scripts": [],
+            "allowedCommonJsDependencies": ["chart.js"]
           },
           "configurations": {
             "production": {
@@ -68,6 +64,11 @@
             },
             "development": {
               "browserTarget": "ponyracer:build:development"
+            },
+            "e2e": {
+              "browserTarget": "ponyracer:build:development",
+              "port": 4201,
+              "liveReload": false
             }
           },
           "defaultConfiguration": "development"
@@ -85,14 +86,51 @@
             "polyfills": "src/polyfills.ts",
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
-            "assets": [
-              "src/favicon.ico",
-              "src/assets"
-            ],
-            "styles": [
-              "src/styles.css"
-            ],
+            "codeCoverageExclude": ["**/models/*.ts", "**/app.module.ts", "**/app.routes.ts"],
+            "assets": ["src/favicon.ico", "src/assets"],
+            "styles": ["src/styles.css"],
             "scripts": []
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html", "cypress/**/*.ts"],
+            "maxWarnings": 0
+          }
+        },
+        "cypress-run": {
+          "builder": "@cypress/schematic:cypress",
+          "options": {
+            "devServerTarget": "ponyracer:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "ponyracer:serve:production"
+            }
+          }
+        },
+        "cypress-open": {
+          "builder": "@cypress/schematic:cypress",
+          "options": {
+            "watch": true,
+            "headless": false
+          }
+        },
+        "e2e": {
+          "builder": "@cypress/schematic:cypress",
+          "options": {
+            "devServerTarget": "ponyracer:serve:e2e",
+            "browser": "chrome",
+            "baseUrl": "http://localhost:4201",
+            "watch": true,
+            "headless": false,
+            "e2e": true
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "ponyracer:serve:production"
+            }
           }
         }
       }

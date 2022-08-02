@@ -2,7 +2,7 @@
   <h2>{{ raceModel.name }}</h2>
   <p>{{ raceModel.startInstant | fromNow }}</p>
   <div class="row">
-    <div *ngFor="let pony of raceModel.ponies" class="col-sm-1">
+    <div *ngFor="let pony of raceModel.ponies" class="col-sm-2">
       <pr-pony [ponyModel]="pony"></pr-pony>
     </div>
   </div>

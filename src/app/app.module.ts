@@ -12,6 +12,6 @@ import { FromNowPipe } from './from-now.pipe';
   declarations: [AppComponent, MenuComponent, RacesComponent, RaceComponent, PonyComponent, FromNowPipe],
   imports: [BrowserModule],
   providers: [],
-  bootstrap: [AppComponent],
+  bootstrap: [AppComponent]
 })
 export class AppModule {}

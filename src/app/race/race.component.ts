@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+
 import { RaceModel } from '../models/race.model';
 
 @Component({
@@ -8,5 +9,4 @@ import { RaceModel } from '../models/race.model';
 })
 export class RaceComponent {
   @Input() raceModel!: RaceModel;
-  constructor() {}
 }
