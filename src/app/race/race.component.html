@@ -1,4 +1,8 @@
-<h2>{{raceModel.name}}</h2>
-<ul>
-  <li *ngFor="let pony; of raceModel.ponies">{{pony.name}}</li>
-</ul>
+<div>
+  <h2>{{ raceModel.name }}</h2>
+  <div class="row">
+    <div *ngFor="let pony of raceModel.ponies" class="col-sm-1">
+      <pr-pony [ponyModel]="pony"></pr-pony>
+    </div>
+  </div>
+</div>
