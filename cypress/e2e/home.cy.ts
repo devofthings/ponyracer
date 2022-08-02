@@ -27,6 +27,7 @@ describe('Ponyracer', () => {
   it('should display a race list', () => {
     cy.visit('/');
     cy.get('h2').should('have.length', 2);
+    cy.get('p').should('have.length', 2);
   });
 
   it('should display ponies', () => {
