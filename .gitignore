@@ -42,3 +42,6 @@ testem.log
 Thumbs.db
 results
 cypress/screenshots
+
+# ng2ninja
+exercise.json
