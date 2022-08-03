@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { of } from 'rxjs';
 
 import { RacesComponent } from './races.component';
 import { RaceComponent } from '../race/race.component';
@@ -17,10 +18,12 @@ describe('RacesComponent', () => {
       declarations: [RacesComponent, RaceComponent, PonyComponent, FromNowPipe],
       providers: [{ provide: RaceService, useValue: raceService }]
     });
-    raceService.list.and.returnValue([
-      { name: 'Tokyo', startInstant: '2020-02-18T08:03:00Z' },
-      { name: 'Paris', startInstant: '2020-02-18T08:04:00Z' }
-    ] as Array<RaceModel>);
+    raceService.list.and.returnValue(
+      of([
+        { name: 'Tokyo', startInstant: '2020-02-18T08:03:00Z' },
+        { name: 'Paris', startInstant: '2020-02-18T08:04:00Z' }
+      ] as Array<RaceModel>)
+    );
   });
 
   it('should display every race', () => {
