@@ -1,28 +1,33 @@
-import { fakeAsync, tick, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 import { RaceService } from './race.service';
 import { RaceModel } from './models/race.model';
 
 describe('RaceService', () => {
   let raceService: RaceService;
+  let http: HttpTestingController;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule]
+    });
     raceService = TestBed.inject(RaceService);
+    http = TestBed.inject(HttpTestingController);
   });
 
-  it('should list races', fakeAsync(() => {
-    let fetchedRaces: Array<RaceModel> = [];
-    raceService.list().subscribe((races: Array<RaceModel>) => (fetchedRaces = races));
+  afterAll(() => http.verify());
 
-    tick(200);
+  it('should list races', () => {
+    // fake response
+    const hardcodedRaces = [{ name: 'Paris' }, { name: 'Tokyo' }, { name: 'Lyon' }] as Array<RaceModel>;
 
-    expect(fetchedRaces.length).withContext('The service should return the races after a 500ms delay').toBe(0);
+    let actualRaces: Array<RaceModel> = [];
+    raceService.list().subscribe((races: Array<RaceModel>) => (actualRaces = races));
 
-    tick(400);
+    http.expectOne('https://ponyracer.ninja-squad.com/api/races?status=PENDING').flush(hardcodedRaces);
 
-    expect(fetchedRaces.length)
-      .withContext('The service should return five races in an Observable for the `list()` method after 500ms')
-      .toBe(2);
-  }));
+    expect(actualRaces.length).withContext('The `list` method should return an array of RaceModel wrapped in an Observable').not.toBe(0);
+    expect(actualRaces).toEqual(hardcodedRaces);
+  });
 });
