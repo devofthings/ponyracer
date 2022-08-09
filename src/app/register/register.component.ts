@@ -1,25 +1,22 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, Validators } from '@angular/forms';
 
 @Component({
-  selector: 'pr-register',
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css']
 })
 export class RegisterComponent {
-  userForm: FormGroup<{
-    login: FormControl<string | null>;
-    password: FormControl<string | null>;
-    birthYear: FormControl<number | null>;
-  }>;
+  loginCtrl = this.fb.control('', Validators.required);
+  passwordCtrl = this.fb.control('', Validators.required);
+  birthYearCtrl = this.fb.control<number | null>(null, Validators.required);
 
-  constructor(fb: FormBuilder) {
-    this.userForm = fb.group({
-      login: fb.control('', Validators.required),
-      password: fb.control('', Validators.required),
-      birthYear: fb.control(0, Validators.required)
-    });
-  }
+  userForm = this.fb.group({
+    login: this.loginCtrl,
+    password: this.passwordCtrl,
+    birthYear: this.birthYearCtrl
+  });
 
-  register() {}
+  constructor(private fb: NonNullableFormBuilder) {}
+
+  register(): void {}
 }
