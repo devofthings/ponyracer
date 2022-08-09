@@ -2,23 +2,44 @@
   <div class="col-md-6 offset-md-3">
     <h1>Sign up</h1>
 
+    <div id="registration-error" class="alert alert-danger" *ngIf="registrationFailed">
+      <button type="button" class="btn-close" aria-label="Close" (click)="registrationFailed = false"></button>
+      Try again with another login.
+    </div>
+
     <form (ngSubmit)="register()" [formGroup]="userForm">
       <div class="mb-3">
         <label for="login" class="form-label" id="login-label">Login</label>
         <input id="login" class="form-control" formControlName="login" />
-        <div *ngIf="loginCtrl.dirty && loginCtrl.hasError('required')" id="login-warning">Login is required</div>
+        <div id="login-warning" *ngIf="loginCtrl.dirty && loginCtrl.hasError('required')">Login is required</div>
+        <div id="login-length-error" *ngIf="loginCtrl.dirty && loginCtrl.hasError('minlength')">
+          Your login should be at least 3 characters
+        </div>
       </div>
 
-      <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <input id="password" class="form-control" type="password" formControlName="password" />
-        <div *ngIf="passwordCtrl.dirty && passwordCtrl.hasError('required')">Password is required</div>
+      <div formGroupName="passwordForm">
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input id="password" class="form-control" type="password" formControlName="password" />
+          <div *ngIf="passwordCtrl.dirty && passwordCtrl.hasError('required')">Password is required</div>
+        </div>
+        <div class="mb-3">
+          <label for="confirm" class="form-label">Confirm password</label>
+          <input id="confirm" class="form-control" type="password" formControlName="confirmPassword" />
+          <div *ngIf="confirmPasswordCtrl.dirty && confirmPasswordCtrl.hasError('required')">Confirming password is required</div>
+        </div>
+        <div id="password-matching-error" *ngIf="passwordGroup.dirty && passwordGroup.hasError('matchingError')">
+          Your password does not match
+        </div>
       </div>
 
       <div class="mb-3">
         <label for="birthYear" class="form-label">Birth year</label>
         <input id="birthYear" class="form-control" type="number" formControlName="birthYear" />
         <div *ngIf="birthYearCtrl.dirty && birthYearCtrl.hasError('required')">Birth year is required</div>
+        <div id="invalid-year-error" *ngIf="birthYearCtrl.dirty && (birthYearCtrl.hasError('min') || birthYearCtrl.hasError('max'))">
+          This is not a valid year
+        </div>
       </div>
 
       <button class="btn btn-primary" type="submit" [disabled]="userForm.invalid">Let's Go!</button>
