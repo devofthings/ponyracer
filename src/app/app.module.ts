@@ -1,5 +1,6 @@
 import { HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 
@@ -11,10 +12,11 @@ import { MenuComponent } from './menu/menu.component';
 import { PonyComponent } from './pony/pony.component';
 import { RaceComponent } from './race/race.component';
 import { RacesComponent } from './races/races.component';
+import { RegisterComponent } from './register/register.component';
 
 @NgModule({
-  declarations: [AppComponent, MenuComponent, RacesComponent, RaceComponent, PonyComponent, FromNowPipe, HomeComponent],
-  imports: [HttpClientModule, BrowserModule, RouterModule.forRoot(ROUTES)],
+  declarations: [AppComponent, MenuComponent, RacesComponent, RaceComponent, PonyComponent, FromNowPipe, HomeComponent, RegisterComponent],
+  imports: [HttpClientModule, BrowserModule, ReactiveFormsModule, RouterModule.forRoot(ROUTES)],
   providers: [],
   bootstrap: [AppComponent]
 })
