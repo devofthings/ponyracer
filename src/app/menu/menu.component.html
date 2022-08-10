@@ -10,6 +10,15 @@
           <a class="nav-link" routerLink="/races">Races</a>
         </li>
       </ul>
+      <ul class="navbar-nav" *ngIf="user">
+        <li class="navbar-text">
+          <span id="current-user" class="me-2">
+            {{ user.login }}
+            <span class="fa fa-star"></span>
+            {{ user.money }}
+          </span>
+        </li>
+      </ul>
     </div>
   </div>
 </nav>
