@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { RouterLinkWithHref } from '@angular/router';
+import { Router, RouterLinkWithHref } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
 
@@ -9,15 +9,18 @@ import { UserService } from '../user.service';
 import { UserModel } from '../models/user.model';
 
 describe('MenuComponent', () => {
-  const userService = { userEvents: new Subject<UserModel>() } as UserService;
+  const userService = {
+    userEvents: new Subject<UserModel>(),
+    logout: () => {}
+  } as UserService;
 
-  beforeEach(() =>
+  beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [RouterTestingModule],
       declarations: [MenuComponent],
       providers: [{ provide: UserService, useValue: userService }]
-    })
-  );
+    });
+  });
 
   it('should have a `navbarCollapsed` field', () => {
     const fixture = TestBed.createComponent(MenuComponent);
@@ -121,5 +124,35 @@ describe('MenuComponent', () => {
     fixture.componentInstance.ngOnDestroy();
 
     expect(fixture.componentInstance.userEventsSubscription!.unsubscribe).toHaveBeenCalled();
+  });
+
+  it('should display a logout button', () => {
+    const fixture = TestBed.createComponent(MenuComponent);
+    const component = fixture.componentInstance;
+    component.user = { login: 'cedric', money: 200 } as UserModel;
+    fixture.detectChanges();
+    spyOn(fixture.componentInstance, 'logout');
+
+    const element = fixture.nativeElement;
+    const logout = element.querySelector('span.fa-power-off');
+    expect(logout).withContext('You should have a span element with a class `fa-power-off` to log out').not.toBeNull();
+    logout.dispatchEvent(new Event('click', { bubbles: true }));
+
+    fixture.detectChanges();
+    expect(fixture.componentInstance.logout).toHaveBeenCalled();
+  });
+
+  it('should stop the click event propagation', () => {
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigateByUrl');
+    const fixture = TestBed.createComponent(MenuComponent);
+    const event = new Event('click');
+    spyOn(userService, 'logout');
+    spyOn(event, 'preventDefault');
+    fixture.componentInstance.logout(event);
+
+    expect(userService.logout).toHaveBeenCalled();
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/');
   });
 });

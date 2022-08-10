@@ -32,11 +32,16 @@ export class UserService {
     this.userEvents.next(user);
   }
 
-  retrieveUser() {
+  retrieveUser(): void {
     const value = window.localStorage.getItem('rememberMe');
     if (value) {
       const user = JSON.parse(value) as UserModel;
       this.userEvents.next(user);
     }
+  }
+
+  logout(): void {
+    this.userEvents.next(null);
+    window.localStorage.removeItem('rememberMe');
   }
 }

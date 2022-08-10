@@ -83,4 +83,14 @@ describe('UserService', () => {
 
     expect(userService.userEvents.next).not.toHaveBeenCalled();
   });
+
+  it('should logout the user', () => {
+    spyOn(userService.userEvents, 'next');
+    spyOn(Storage.prototype, 'removeItem');
+
+    userService.logout();
+
+    expect(userService.userEvents.next).toHaveBeenCalledWith(null);
+    expect(Storage.prototype.removeItem).toHaveBeenCalledWith('rememberMe');
+  });
 });
