@@ -11,7 +11,9 @@ export class UserService {
   BASE_URL = 'https://ponyracer.ninja-squad.com/api';
   userEvents = new BehaviorSubject<UserModel | null>(null);
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.retrieveUser();
+  }
 
   register(login: string, password: string, birthYear: number): Observable<UserModel> {
     const body = { login, password, birthYear };
@@ -22,6 +24,19 @@ export class UserService {
     const body = { ...credentials };
     return this.http
       .post<UserModel>(`${this.BASE_URL}/users/authentication`, body)
-      .pipe(tap((user: UserModel) => this.userEvents.next(user)));
+      .pipe(tap((user: UserModel) => this.storeLoggedInUser(user)));
+  }
+
+  storeLoggedInUser(user: UserModel): void {
+    window.localStorage.setItem('rememberMe', JSON.stringify(user));
+    this.userEvents.next(user);
+  }
+
+  retrieveUser() {
+    const value = window.localStorage.getItem('rememberMe');
+    if (value) {
+      const user = JSON.parse(value) as UserModel;
+      this.userEvents.next(user);
+    }
   }
 }
