@@ -3,7 +3,7 @@ describe('Ponyracer', () => {
     cy.visit('/');
     cy.contains('h1', 'Ponyracer');
     cy.contains('small', 'Always a pleasure to bet on ponies');
-    cy.get('.btn-primary').contains('Races').should('have.attr', 'href', '/races');
+    cy.get('.btn-primary').contains('Login').should('have.attr', 'href', '/login');
     cy.get('.btn-primary').contains('Register').should('have.attr', 'href', '/register');
   });
 
