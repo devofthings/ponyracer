@@ -8,10 +8,16 @@ import { UserModel } from './models/user.model';
   providedIn: 'root'
 })
 export class UserService {
+  BASE_URL = 'https://ponyracer.ninja-squad.com/api';
   constructor(private http: HttpClient) {}
 
   register(login: string, password: string, birthYear: number): Observable<UserModel> {
     const body = { login, password, birthYear };
-    return this.http.post<UserModel>('https://ponyracer.ninja-squad.com/api/users', body);
+    return this.http.post<UserModel>(`${this.BASE_URL}/users`, body);
+  }
+
+  authenticate(credentials: { login: string; password: string }): Observable<UserModel> {
+    const body = { ...credentials };
+    return this.http.post<UserModel>(`${this.BASE_URL}/users/authentication`, body);
   }
 }
