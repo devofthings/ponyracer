@@ -3,12 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap } from 'rxjs';
 
 import { UserModel } from './models/user.model';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-  BASE_URL = 'https://ponyracer.ninja-squad.com/api';
   userEvents = new BehaviorSubject<UserModel | null>(null);
 
   constructor(private http: HttpClient) {
@@ -17,13 +17,13 @@ export class UserService {
 
   register(login: string, password: string, birthYear: number): Observable<UserModel> {
     const body = { login, password, birthYear };
-    return this.http.post<UserModel>(`${this.BASE_URL}/users`, body);
+    return this.http.post<UserModel>(`${environment}/api/users`, body);
   }
 
   authenticate(credentials: { login: string; password: string }): Observable<UserModel> {
     const body = { ...credentials };
     return this.http
-      .post<UserModel>(`${this.BASE_URL}/users/authentication`, body)
+      .post<UserModel>(`${environment.baseUrl}/api/users/authentication`, body)
       .pipe(tap((user: UserModel) => this.storeLoggedInUser(user)));
   }
 
