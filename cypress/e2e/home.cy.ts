@@ -27,7 +27,7 @@ describe('Ponyracer', () => {
   it('should display a navbar', () => {
     cy.visit('/');
     cy.get(navbarBrand).contains('PonyRacer').should('have.attr', 'href', '/');
-    cy.get(navbarLink).contains('Races').should('have.attr', 'href', '/races');
+    cy.get(navbarLink).should('not.exist');
   });
 
   it('should display a navbar collapsed on small screen', () => {
@@ -47,7 +47,7 @@ describe('Ponyracer', () => {
     cy.get(navbarLink).should('be.visible');
   });
 
-  it('should display the logged in user in navbar', () => {
+  it('should display the logged in user in navbar and a different home', () => {
     cy.visit('/login');
 
     cy.get('input').first().type('cedric');
@@ -59,5 +59,7 @@ describe('Ponyracer', () => {
     cy.get(navbarLink).contains('Races').should('have.attr', 'href', '/races');
 
     cy.get('#current-user').should('contain', 'cedric').and('contain', '1000');
+
+    cy.get('.btn-primary').contains('Races').should('have.attr', 'href', '/races');
   });
 });

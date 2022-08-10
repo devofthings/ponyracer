@@ -3,7 +3,7 @@
 </div>
 
 <div class="text-center">
-  <a class="btn btn-large btn-primary me-2" routerLink="/races">Races</a>
-  <a class="btn btn-large btn-primary me-2" routerLink="/register">Register</a>
-  <a class="btn btn-large btn-primary" routerLink="/login">Login</a>
+  <a class="btn btn-large btn-primary me-2" routerLink="/races" *ngIf="user" else="notLoggedIn">Races</a>
+  <a class="btn btn-large btn-primary me-2" routerLink="/register" #notLoggedIn>Register</a>
+  <a class="btn btn-large btn-primary" routerLink="/login" #notLoggedIn>Login</a>
 </div>
