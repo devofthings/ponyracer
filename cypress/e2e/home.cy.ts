@@ -78,7 +78,7 @@ describe('Ponyracer', () => {
   it('should log out the user', () => {
     storeUserInLocalStorage();
     cy.visit('/races');
-    cy.wait('@getRaces');
+    cy.wait('@getRaces').its('request.headers').should('have.property', 'authorization', `Bearer ${user.token}`);
 
     // user stored should be displayed
     cy.get('#current-user').should('contain', 'cedric').and('contain', '1000');

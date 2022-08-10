@@ -3,10 +3,12 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 
 import { UserService } from './user.service';
 import { UserModel } from './models/user.model';
+import { JwtInterceptor } from './jwt.interceptor';
 
 describe('UserService', () => {
   let userService: UserService;
   let http: HttpTestingController;
+  let jwtInterceptor: JwtInterceptor;
 
   const user = {
     id: 1,
@@ -25,6 +27,7 @@ describe('UserService', () => {
   beforeEach(() => {
     userService = TestBed.inject(UserService);
     http = TestBed.inject(HttpTestingController);
+    jwtInterceptor = TestBed.inject(JwtInterceptor);
   });
 
   afterAll(() => http.verify());
@@ -59,20 +62,24 @@ describe('UserService', () => {
   it('should store the logged in user', () => {
     spyOn(userService.userEvents, 'next');
     spyOn(Storage.prototype, 'setItem');
+    spyOn(jwtInterceptor, 'setJwtToken');
 
     userService.storeLoggedInUser(user);
 
     expect(userService.userEvents.next).toHaveBeenCalledWith(user);
     expect(Storage.prototype.setItem).toHaveBeenCalledWith('rememberMe', JSON.stringify(user));
+    expect(jwtInterceptor.setJwtToken).toHaveBeenCalledWith(user.token);
   });
 
   it('should retrieve a user if one is stored', () => {
     spyOn(userService.userEvents, 'next');
     spyOn(Storage.prototype, 'getItem').and.returnValue(JSON.stringify(user));
+    spyOn(jwtInterceptor, 'setJwtToken');
 
     userService.retrieveUser();
 
     expect(userService.userEvents.next).toHaveBeenCalledWith(user);
+    expect(jwtInterceptor.setJwtToken).toHaveBeenCalledWith(user.token);
   });
 
   it('should retrieve no user if none stored', () => {
@@ -87,10 +94,12 @@ describe('UserService', () => {
   it('should logout the user', () => {
     spyOn(userService.userEvents, 'next');
     spyOn(Storage.prototype, 'removeItem');
+    spyOn(jwtInterceptor, 'removeJwtToken');
 
     userService.logout();
 
     expect(userService.userEvents.next).toHaveBeenCalledWith(null);
     expect(Storage.prototype.removeItem).toHaveBeenCalledWith('rememberMe');
+    expect(jwtInterceptor.removeJwtToken).toHaveBeenCalled();
   });
 });

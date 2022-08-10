@@ -3,7 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap } from 'rxjs';
 
 import { UserModel } from './models/user.model';
-import { environment } from 'src/environments/environment';
+import { environment } from '../environments/environment';
+import { JwtInterceptor } from './jwt.interceptor';
 
 @Injectable({
   providedIn: 'root'
@@ -11,24 +12,24 @@ import { environment } from 'src/environments/environment';
 export class UserService {
   userEvents = new BehaviorSubject<UserModel | null>(null);
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private jwtInterceptor: JwtInterceptor) {
     this.retrieveUser();
   }
 
   register(login: string, password: string, birthYear: number): Observable<UserModel> {
     const body = { login, password, birthYear };
-    return this.http.post<UserModel>(`${environment}/api/users`, body);
+    return this.http.post<UserModel>(`${environment.baseUrl}/api/users`, body);
   }
 
   authenticate(credentials: { login: string; password: string }): Observable<UserModel> {
-    const body = { ...credentials };
     return this.http
-      .post<UserModel>(`${environment.baseUrl}/api/users/authentication`, body)
+      .post<UserModel>(`${environment.baseUrl}/api/users/authentication`, credentials)
       .pipe(tap((user: UserModel) => this.storeLoggedInUser(user)));
   }
 
   storeLoggedInUser(user: UserModel): void {
     window.localStorage.setItem('rememberMe', JSON.stringify(user));
+    this.jwtInterceptor.setJwtToken(user.token);
     this.userEvents.next(user);
   }
 
@@ -36,12 +37,14 @@ export class UserService {
     const value = window.localStorage.getItem('rememberMe');
     if (value) {
       const user = JSON.parse(value) as UserModel;
+      this.jwtInterceptor.setJwtToken(user.token);
       this.userEvents.next(user);
     }
   }
 
   logout(): void {
-    this.userEvents.next(null);
     window.localStorage.removeItem('rememberMe');
+    this.jwtInterceptor.removeJwtToken();
+    this.userEvents.next(null);
   }
 }
