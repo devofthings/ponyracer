@@ -15,6 +15,7 @@ import { PonyComponent } from './pony/pony.component';
 import { RaceComponent } from './race/race.component';
 import { RacesComponent } from './races/races.component';
 import { RegisterComponent } from './register/register.component';
+import { BetComponent } from './bet/bet.component';
 
 @NgModule({
   declarations: [
@@ -26,7 +27,8 @@ import { RegisterComponent } from './register/register.component';
     FromNowPipe,
     HomeComponent,
     RegisterComponent,
-    LoginComponent
+    LoginComponent,
+    BetComponent
   ],
   imports: [BrowserModule, HttpClientModule, RouterModule.forRoot(ROUTES), ReactiveFormsModule, FormsModule],
   bootstrap: [AppComponent],
