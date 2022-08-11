@@ -21,10 +21,17 @@ export class BetComponent implements OnInit {
   }
 
   betOnPony(pony: PonyModel): void {
-    this.raceService.bet(this.raceModel!.id, pony.id).subscribe({
-      next: race => (this.raceModel = race),
-      error: () => (this.betFailed = true)
-    });
+    if (!this.isPonySelected(pony)) {
+      this.raceService.bet(this.raceModel!.id, pony.id).subscribe({
+        next: race => (this.raceModel = race),
+        error: () => (this.betFailed = true)
+      });
+    } else {
+      this.raceService.cancelBet(this.raceModel!.id).subscribe({
+        next: () => (this.raceModel!.betPonyId = undefined),
+        error: () => (this.betFailed = true)
+      });
+    }
   }
 
   isPonySelected(pony: PonyModel): boolean {

@@ -48,7 +48,7 @@ function storeUserInLocalStorage(): void {
 describe('Bet', () => {
   beforeEach(() => startBackend());
 
-  it('should bet on ponies', () => {
+  it('should bet on ponies and cancel', () => {
     storeUserInLocalStorage();
     cy.visit('/races');
     cy.wait('@getRaces');
@@ -81,6 +81,22 @@ describe('Bet', () => {
     // a pony is still selected
     cy.get('.selected').should('have.length', 1);
 
+    // cancel fails
+    cy.intercept('DELETE', 'api/races/12/bets', {
+      statusCode: 404
+    }).as('failedCancelBetRace');
+
+    // cancel bet on second pony
+    cy.get('img').eq(1).click();
+    cy.wait('@failedCancelBetRace');
+
+    // alert should be displayed
+    cy.get('.alert').should('contain', 'The race is already started or finished');
+
+    // close alert
+    cy.get('.alert button').click();
+    cy.get('.alert').should('not.exist');
+
     // bet fails
     cy.intercept('POST', 'api/races/12/bets', {
       statusCode: 404
@@ -96,5 +112,14 @@ describe('Bet', () => {
     // close alert
     cy.get('.alert button').click();
     cy.get('.alert').should('not.exist');
+
+    cy.intercept('DELETE', 'api/races/12/bets', {}).as('cancelBetRace');
+
+    // cancel bet
+    cy.get('img').eq(1).click();
+    cy.wait('@cancelBetRace');
+
+    // no pony is selected anymore
+    cy.get('.selected').should('have.length', 0);
   });
 });
