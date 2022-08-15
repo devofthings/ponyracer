@@ -16,6 +16,7 @@ import { RaceComponent } from './race/race.component';
 import { RacesComponent } from './races/races.component';
 import { RegisterComponent } from './register/register.component';
 import { BetComponent } from './bet/bet.component';
+import { LiveComponent } from './live/live.component';
 
 @NgModule({
   declarations: [
@@ -28,7 +29,8 @@ import { BetComponent } from './bet/bet.component';
     HomeComponent,
     RegisterComponent,
     LoginComponent,
-    BetComponent
+    BetComponent,
+    LiveComponent
   ],
   imports: [BrowserModule, HttpClientModule, RouterModule.forRoot(ROUTES), ReactiveFormsModule, FormsModule],
   bootstrap: [AppComponent],
