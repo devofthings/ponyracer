@@ -1,3 +1,5 @@
+import * as Webstomp from 'webstomp-client';
+
 const race = {
   id: 12,
   name: 'Paris',
@@ -8,8 +10,7 @@ const race = {
     { id: 4, name: 'Superb Whiskey', color: 'GREEN' },
     { id: 5, name: 'Fast Rainbow', color: 'BLUE' }
   ],
-  startInstant: '2020-02-18T08:02:00Z',
-  status: 'PENDING'
+  startInstant: '2020-02-18T08:02:00Z'
 };
 
 const user = {
@@ -21,11 +22,57 @@ const user = {
 };
 
 function startBackend(): void {
-  cy.intercept('GET', 'api/races/12', race).as('getPendingRace');
+  cy.intercept('GET', 'api/races?status=PENDING', [
+    race,
+    {
+      id: 13,
+      name: 'Tokyo',
+      ponies: [
+        { id: 6, name: 'Fast Rainbow', color: 'BLUE' },
+        { id: 7, name: 'Gentle Castle', color: 'GREEN' },
+        { id: 8, name: 'Awesome Rock', color: 'PURPLE' },
+        { id: 9, name: 'Little Rainbow', color: 'YELLOW' },
+        { id: 10, name: 'Great Soda', color: 'ORANGE' }
+      ],
+      startInstant: '2020-02-18T08:03:00Z'
+    }
+  ]).as('getRaces');
+
+  cy.intercept('GET', 'api/races/12', race).as('getRace');
+
+  cy.intercept('POST', 'api/races/12/bets', { ...race, betPonyId: 1 }).as('betRace');
 }
 
 function storeUserInLocalStorage(): void {
   localStorage.setItem('rememberMe', JSON.stringify(user));
+}
+
+function buildFakeWS() {
+  const fakeWS: any = {
+    close: () => ({}),
+    send: (message: string) => {
+      const unmarshalled = Webstomp.Frame.unmarshallSingle(message);
+      if (unmarshalled.command === 'CONNECT') {
+        fakeWS.onmessage({ data: Webstomp.Frame.marshall('CONNECTED') });
+      } else if (unmarshalled.command === 'SUBSCRIBE' && unmarshalled.headers.destination === '/race/12') {
+        fakeWS.id = unmarshalled.headers.id;
+      }
+    },
+    emulateRace: (liveRaceModel: any) => {
+      const headers = {
+        destination: '/race/12',
+        subscription: fakeWS.id
+      };
+      const data = Webstomp.Frame.marshall('MESSAGE', headers, JSON.stringify(liveRaceModel));
+      fakeWS.onmessage({ data });
+    }
+  };
+  const wsOptions = {
+    onBeforeLoad(win: any) {
+      cy.stub(win, 'WebSocket').as('ws').returns(fakeWS);
+    }
+  };
+  return { fakeWS, wsOptions };
 }
 
 describe('Live', () => {
@@ -33,9 +80,59 @@ describe('Live', () => {
 
   it('should display a live race', () => {
     storeUserInLocalStorage();
-    cy.visit('/races/12/live');
-    cy.wait('@getPendingRace');
 
+    const { fakeWS, wsOptions } = buildFakeWS();
+    cy.visit('/races', wsOptions);
+    cy.wait('@getRaces');
+
+    // go to bet page for the first race
+    cy.get('.btn-primary').first().click();
+    cy.wait('@getRace');
+
+    // bet on first pony
+    cy.get('img').first().click();
+    cy.wait('@betRace');
+
+    // emulate a pending race
+    cy.intercept('GET', 'api/races/12', {
+      ...race,
+      betPonyId: 2,
+      status: 'PENDING'
+    }).as('getPendingRace');
+
+    // go to live
+    cy.get('.btn-primary').first().click();
+    cy.location('pathname').should('eq', '/races/12/live');
+    cy.wait('@getPendingRace');
+    cy.wait(1000);
+
+    let angular: any;
+    cy.window().then((win: Window) => (angular = (win as any).ng));
+    let document: Document;
+    cy.document().then(doc => (document = doc));
+
+    // WebSocket connection created
+    cy.get('@ws')
+      .should('be.called')
+      .then(() => {
+        fakeWS.emulateRace({
+          ponies: [
+            { id: 1, name: 'Gentle Pie', color: 'YELLOW', position: 30 },
+            { id: 2, name: 'Big Soda', color: 'ORANGE', position: 80 },
+            { id: 3, name: 'Gentle Bottle', color: 'PURPLE', position: 70 },
+            { id: 4, name: 'Superb Whiskey', color: 'GREEN', position: 60 },
+            { id: 5, name: 'Fast Rainbow', color: 'BLUE', position: 30 }
+          ],
+          status: 'RUNNING'
+        });
+        // the component can be inside ng-component if it has no selector
+        const element = document.querySelector('pr-live') || document.querySelector('ng-component');
+        const liveComponent = angular.getComponent(element);
+        angular.applyChanges(liveComponent);
+      });
+
+    // race detail should be displayed
     cy.get('h1').should('contain', 'Paris');
+    cy.get('img').should('have.length', 5);
   });
 });

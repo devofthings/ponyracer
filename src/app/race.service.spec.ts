@@ -1,18 +1,22 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { Subject } from 'rxjs';
 
 import { environment } from '../environments/environment';
 import { RaceService } from './race.service';
+import { WsService } from './ws.service';
 import { RaceModel } from './models/race.model';
 import { PonyWithPositionModel } from './models/pony.model';
 
 describe('RaceService', () => {
   let raceService: RaceService;
   let http: HttpTestingController;
+  const wsService = jasmine.createSpyObj<WsService>('WsService', ['connect']);
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule]
+      imports: [HttpClientTestingModule],
+      providers: [{ provide: WsService, useValue: wsService }]
     });
     raceService = TestBed.inject(RaceService);
     http = TestBed.inject(HttpTestingController);
@@ -73,56 +77,47 @@ describe('RaceService', () => {
     expect(called).toBe(true);
   });
 
-  it('should return live positions every seconds', fakeAsync(() => {
+  it('should return live positions from websockets', () => {
     const raceId = 1;
+    const messages = new Subject<{
+      status: 'PENDING' | 'RUNNING' | 'FINISHED';
+      ponies: Array<PonyWithPositionModel>;
+    }>();
     let positions: Array<PonyWithPositionModel> = [];
-    let counter = 0;
+
+    wsService.connect.and.returnValue(messages);
 
     raceService.live(raceId).subscribe(pos => {
       positions = pos;
-      counter++;
     });
 
-    expect(positions.length).withContext('The observable should only emit after 1 second').toBe(0);
+    expect(wsService.connect).toHaveBeenCalledWith(`/race/${raceId}`);
 
-    // emulates the 1 second delay
-    tick(1000);
-    expect(positions.length).withContext('The observable should have emitted after a 1 second inteval').toBe(5);
-    let position = positions[0];
-    expect(position.name).toBe('Superb Runner');
-    expect(position.color).toBe('BLUE');
-    expect(position.position).toBe(0);
-    tick(1000);
+    messages.next({
+      status: 'RUNNING',
+      ponies: [
+        {
+          id: 1,
+          name: 'Superb Runner',
+          color: 'BLUE',
+          position: 1
+        }
+      ]
+    });
 
-    expect(positions.length).toBe(5);
-    position = positions[1];
-    expect(position.name).toBe('Awesome Fridge');
-    expect(position.color).toBe('GREEN');
-    expect(position.position).toBe(1);
+    messages.next({
+      status: 'RUNNING',
+      ponies: [
+        {
+          id: 1,
+          name: 'Superb Runner',
+          color: 'BLUE',
+          position: 100
+        }
+      ]
+    });
 
-    // emulates the 100 seconds of the race
-    while (counter < 100) {
-      tick(1000);
-    }
-
-    expect(positions.length).toBe(5);
-    position = positions[2];
-    expect(position.name).toBe('Great Bottle');
-    expect(position.color).toBe('ORANGE');
-    expect(position.position).toBe(99);
-
-    tick(1000);
-    expect(positions.length).toBe(5);
-    position = positions[3];
-    expect(position.name).toBe('Little Flower');
-    expect(position.color).toBe('YELLOW');
-    expect(position.position).toBe(100);
-
-    tick(1000);
-    expect(positions.length).toBe(5);
-    position = positions[4];
-    expect(position.name).toBe('Nice Rock');
-    expect(position.color).toBe('PURPLE');
-    expect(position.position).toBe(100);
-  }));
+    expect(positions.length).toBe(1);
+    expect(positions[0].position).toBe(100);
+  });
 });
