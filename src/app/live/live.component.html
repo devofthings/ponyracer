@@ -1,6 +1,42 @@
 <div *ngIf="raceModel">
   <h1>{{ raceModel.name }}</h1>
-  <div *ngFor="let pony of poniesWithPosition" class="pony-wrapper" [style.marginLeft.%]="pony.position - 5">
-    <pr-pony [ponyModel]="pony" [isRunning]="true"></pr-pony>
+  <div class="alert alert-danger" *ngIf="error">A problem occurred during the live.</div>
+  <div id="live-race" [ngSwitch]="raceModel.status">
+    <div *ngSwitchCase="'FINISHED'">
+      <div *ngIf="!winners.length; else displayWinners">The race is over.</div>
+      <ng-template #displayWinners>
+        <div class="alert alert-success" *ngIf="betWon">You won your bet!</div>
+        <div class="alert alert-warning" *ngIf="raceModel.betPonyId && !betWon">You lost your bet.</div>
+        <div>Most Valuable Ponies</div>
+        <div class="row">
+          <div *ngFor="let winner of winners" class="col-12 col-md-2" [class.selected]="winner.id === raceModel.betPonyId">
+            <pr-pony [ponyModel]="winner"></pr-pony>
+          </div>
+        </div>
+      </ng-template>
+    </div>
+    <div *ngSwitchCase="'PENDING'">
+      <div>The race will start {{ raceModel.startInstant | fromNow }}</div>
+      <div class="row">
+        <div *ngFor="let pony of raceModel.ponies" class="col-sm-2" [class.selected]="pony.id === raceModel.betPonyId">
+          <pr-pony [ponyModel]="pony"></pr-pony>
+        </div>
+      </div>
+    </div>
+    <div *ngSwitchCase="'RUNNING'">
+      <div style="margin-left: 95%; margin-bottom: 5px">
+        <span class="fa fa-flag" style="font-size: x-large"></span>
+      </div>
+      <div style="width: 95%; border-right: 3px dotted lightgray">
+        <div
+          *ngFor="let pony of poniesWithPosition"
+          class="pony-wrapper"
+          [class.selected]="pony.id === raceModel.betPonyId"
+          [style.marginLeft.%]="pony.position - 5"
+        >
+          <pr-pony [ponyModel]="pony" [isRunning]="true" [isBoosted]="true"></pr-pony>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

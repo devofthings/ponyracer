@@ -78,10 +78,10 @@ function buildFakeWS() {
 describe('Live', () => {
   beforeEach(() => startBackend());
 
-  it('should display a live race', () => {
+  it('should display a pending live race', () => {
     storeUserInLocalStorage();
 
-    const { fakeWS, wsOptions } = buildFakeWS();
+    const { wsOptions } = buildFakeWS();
     cy.visit('/races', wsOptions);
     cy.wait('@getRaces');
 
@@ -104,12 +104,46 @@ describe('Live', () => {
     cy.get('.btn-primary').first().click();
     cy.location('pathname').should('eq', '/races/12/live');
     cy.wait('@getPendingRace');
-    cy.wait(1000);
+
+    // race detail should be displayed
+    cy.get('h1').should('contain', 'Paris');
+    cy.get('div').should('contain', 'ago');
+    cy.get('img').should('have.length', 5);
+    cy.get('.selected').should('have.length', 1);
+  });
+
+  it('should display a running live race', () => {
+    storeUserInLocalStorage();
+    const { fakeWS, wsOptions } = buildFakeWS();
+
+    cy.visit('/races', wsOptions);
+    cy.wait('@getRaces');
+
+    // go to bet page for the first race
+    cy.get('.btn-primary').first().click();
+    cy.wait('@getRace');
+
+    // bet on first pony
+    cy.get('img').first().click();
+    cy.wait('@betRace');
+
+    // emulate a running race
+    cy.intercept('GET', 'api/races/12', {
+      ...race,
+      betPonyId: 2,
+      status: 'RUNNING'
+    }).as('getRunningRace');
 
     let angular: any;
     cy.window().then((win: Window) => (angular = (win as any).ng));
     let document: Document;
     cy.document().then(doc => (document = doc));
+
+    // go to live
+    cy.get('.btn-primary').first().click();
+    cy.location('pathname').should('eq', '/races/12/live');
+    cy.wait('@getRunningRace');
+    cy.wait(1000);
 
     // WebSocket connection created
     cy.get('@ws')
@@ -131,8 +165,100 @@ describe('Live', () => {
         angular.applyChanges(liveComponent);
       });
 
-    // race detail should be displayed
+    // running ponies should be displayed
     cy.get('h1').should('contain', 'Paris');
     cy.get('img').should('have.length', 5);
+    cy.get('div.pony-wrapper').should('have.attr', 'style').and('include', 'margin-left: 25%;');
+    cy.get('.selected')
+      .should('have.length', 1)
+      .then(() => {
+        fakeWS.emulateRace({
+          ponies: [
+            { id: 1, name: 'Gentle Pie', color: 'YELLOW', position: 50 },
+            { id: 2, name: 'Big Soda', color: 'ORANGE', position: 90 },
+            { id: 3, name: 'Gentle Bottle', color: 'PURPLE', position: 70 },
+            { id: 4, name: 'Superb Whiskey', color: 'GREEN', position: 65 },
+            { id: 5, name: 'Fast Rainbow', color: 'BLUE', position: 30 }
+          ],
+          status: 'RUNNING'
+        });
+        // the component can be inside ng-component if it has no selector
+        const element = document.querySelector('pr-live') || document.querySelector('ng-component');
+        const liveComponent = angular.getComponent(element);
+        angular.applyChanges(liveComponent);
+      });
+    cy.get('img').should('have.length', 5);
+    cy.get('div.pony-wrapper').should('have.attr', 'style').and('include', 'margin-left: 45%;');
+  });
+
+  it('should display a finished live race', () => {
+    storeUserInLocalStorage();
+    const { fakeWS, wsOptions } = buildFakeWS();
+
+    cy.visit('/races', wsOptions);
+    cy.wait('@getRaces');
+
+    // go to bet page for the first race
+    cy.get('.btn-primary').first().click();
+    cy.wait('@getRace');
+
+    // bet on first pony
+    cy.get('img').first().click();
+    cy.wait('@betRace');
+
+    // emulate a finished race
+    cy.intercept('GET', 'api/races/12', {
+      ...race,
+      betPonyId: 2,
+      status: 'RUNNING'
+    }).as('getRunningRace');
+
+    // go to live
+    cy.get('.btn-primary').first().click();
+    cy.location('pathname').should('eq', '/races/12/live');
+    cy.wait('@getRunningRace');
+    cy.wait(1000);
+
+    let angular: any;
+    cy.window().then((win: Window) => (angular = (win as any).ng));
+    let document: Document;
+    cy.document().then(doc => (document = doc));
+
+    // WebSocket connection created
+    cy.get('@ws')
+      .should('be.called')
+      // and emulate a finished race
+      .then(() => {
+        fakeWS.emulateRace({
+          ponies: [
+            { id: 1, name: 'Gentle Pie', color: 'YELLOW', position: 30 },
+            { id: 2, name: 'Big Soda', color: 'ORANGE', position: 100 },
+            { id: 3, name: 'Gentle Bottle', color: 'PURPLE', position: 70 },
+            { id: 4, name: 'Superb Whiskey', color: 'GREEN', position: 60 },
+            { id: 5, name: 'Fast Rainbow', color: 'BLUE', position: 30 }
+          ],
+          status: 'RUNNING'
+        });
+        fakeWS.emulateRace({
+          ponies: [
+            { id: 1, name: 'Gentle Pie', color: 'YELLOW', position: 30 },
+            { id: 2, name: 'Big Soda', color: 'ORANGE', position: 100 },
+            { id: 3, name: 'Gentle Bottle', color: 'PURPLE', position: 70 },
+            { id: 4, name: 'Superb Whiskey', color: 'GREEN', position: 60 },
+            { id: 5, name: 'Fast Rainbow', color: 'BLUE', position: 30 }
+          ],
+          status: 'FINISHED'
+        });
+        // the component can be inside ng-component if it has no selector
+        const element = document.querySelector('pr-live') || document.querySelector('ng-component');
+        const liveComponent = angular.getComponent(element);
+        angular.applyChanges(liveComponent);
+      });
+
+    // victorious pony should be displayed
+    cy.get('h1').should('contain', 'Paris');
+    cy.get('img').should('have.length', 1);
+    cy.get('.selected').should('have.length', 1);
+    cy.get('.alert.alert-success').should('have.text', 'You won your bet!');
   });
 });
