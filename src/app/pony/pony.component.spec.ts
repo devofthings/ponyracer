@@ -81,4 +81,18 @@ describe('PonyComponent', () => {
     // then we should have a nice URL
     expect(url).toBe('assets/images/pony-green-running.gif');
   });
+
+  it('should have method to get the image URL for a boosted pony', () => {
+    // given a pony component with a GREEN running pony
+    const ponyComponent: PonyComponent = new PonyComponent();
+    ponyComponent.ponyModel = { id: 1, name: 'Fast Rainbow', color: 'GREEN' };
+    ponyComponent.isBoosted = true;
+    ponyComponent.isRunning = true;
+
+    // when we call the method for the URL
+    const url = ponyComponent.getPonyImageUrl();
+
+    // then we should have a nice URL
+    expect(url).toBe('assets/images/pony-green-rainbow.gif');
+  });
 });

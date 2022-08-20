@@ -10,11 +10,14 @@ import { PonyModel } from '../models/pony.model';
 export class PonyComponent {
   @Input() ponyModel!: PonyModel;
   @Input() isRunning = false;
+  @Input() isBoosted: boolean | undefined = false;
   @Output() readonly ponyClicked = new EventEmitter<PonyModel>();
 
   getPonyImageUrl(): string {
     return this.isRunning
-      ? `assets/images/pony-${this.ponyModel.color.toLowerCase()}-running.gif`
+      ? this.isBoosted
+        ? `assets/images/pony-${this.ponyModel.color.toLowerCase()}-rainbow.gif`
+        : `assets/images/pony-${this.ponyModel.color.toLowerCase()}-running.gif`
       : `assets/images/pony-${this.ponyModel.color.toLowerCase()}.gif`;
   }
 

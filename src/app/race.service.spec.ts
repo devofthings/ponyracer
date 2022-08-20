@@ -138,4 +138,18 @@ describe('RaceService', () => {
     expect(positions.length).toBe(1);
     expect(positions[0].position).withContext('The observable should stop emitting if the race status is FINISHED').toBe(100);
   });
+
+  it('should boost a pony in a race', () => {
+    const ponyId = 12;
+    const raceId = 1;
+
+    let called = false;
+    raceService.boost(raceId, ponyId).subscribe(() => (called = true));
+
+    const req = http.expectOne({ method: 'POST', url: `${environment.baseUrl}/api/races/${raceId}/boosts` });
+    expect(req.request.body).toEqual({ ponyId });
+    req.flush(null);
+
+    expect(called).toBe(true);
+  });
 });
