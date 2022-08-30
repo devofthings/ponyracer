@@ -1,10 +1,11 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 
-import { UserModel } from './models/user.model';
 import { environment } from '../environments/environment';
 import { JwtInterceptor } from './jwt.interceptor';
+import { UserModel } from './models/user.model';
+import { WsService } from './ws.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,7 @@ import { JwtInterceptor } from './jwt.interceptor';
 export class UserService {
   userEvents = new BehaviorSubject<UserModel | null>(null);
 
-  constructor(private http: HttpClient, private jwtInterceptor: JwtInterceptor) {
+  constructor(private http: HttpClient, private jwtInterceptor: JwtInterceptor, private wsService: WsService) {
     this.retrieveUser();
   }
 
@@ -24,7 +25,7 @@ export class UserService {
   authenticate(credentials: { login: string; password: string }): Observable<UserModel> {
     return this.http
       .post<UserModel>(`${environment.baseUrl}/api/users/authentication`, credentials)
-      .pipe(tap((user: UserModel) => this.storeLoggedInUser(user)));
+      .pipe(tap(user => this.storeLoggedInUser(user)));
   }
 
   storeLoggedInUser(user: UserModel): void {
@@ -46,5 +47,9 @@ export class UserService {
     window.localStorage.removeItem('rememberMe');
     this.jwtInterceptor.removeJwtToken();
     this.userEvents.next(null);
+  }
+
+  scoreUpdates(userId: number): Observable<UserModel> {
+    return this.wsService.connect<UserModel>(`/player/${userId}`);
   }
 }
