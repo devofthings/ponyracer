@@ -1,3 +1,5 @@
+import * as Webstomp from 'webstomp-client';
+
 const user = {
   id: 1,
   login: 'cedric',
@@ -18,6 +20,34 @@ const race = {
   ],
   startInstant: '2020-02-18T08:02:00Z'
 };
+
+function buildFakeWS() {
+  const fakeWS: any = {
+    close: () => ({}),
+    send: (message: string) => {
+      const unmarshalled = Webstomp.Frame.unmarshallSingle(message);
+      if (unmarshalled.command === 'CONNECT') {
+        fakeWS.onmessage({ data: Webstomp.Frame.marshall('CONNECTED') });
+      } else if (unmarshalled.command === 'SUBSCRIBE' && unmarshalled.headers.destination === '/player/1') {
+        fakeWS.id = unmarshalled.headers.id;
+      }
+    },
+    emulateScore: userModel => {
+      const headers = {
+        destination: '/player/1',
+        subscription: fakeWS.id
+      };
+      const data = Webstomp.Frame.marshall('MESSAGE', headers, JSON.stringify(userModel));
+      fakeWS.onmessage({ data });
+    }
+  };
+  const wsOptions = {
+    onBeforeLoad(win: any) {
+      cy.stub(win, 'WebSocket').as('ws').returns(fakeWS);
+    }
+  };
+  return { fakeWS, wsOptions };
+}
 
 function startBackend(): void {
   cy.intercept('POST', 'api/users/authentication', user).as('authenticateUser');
@@ -77,11 +107,33 @@ describe('Ponyracer', () => {
 
   it('should log out the user', () => {
     storeUserInLocalStorage();
-    cy.visit('/races');
+    const { fakeWS, wsOptions } = buildFakeWS();
+    cy.visit('/races', wsOptions);
     cy.wait('@getRaces').its('request.headers').should('have.property', 'authorization', `Bearer ${user.token}`);
+
+    cy.get('@ws').should('be.called');
 
     // user stored should be displayed
     cy.get('#current-user').should('contain', 'cedric').and('contain', '1000');
+    cy.wait(1000);
+
+    let angular: any;
+    cy.window().then((win: Window) => (angular = (win as any).ng));
+    let document: Document;
+    cy.document().then(doc => (document = doc));
+
+    cy.get('#current-user').then(() => {
+      fakeWS.emulateScore({
+        ...user,
+        money: 1200
+      });
+      const element = document.querySelector('pr-menu');
+      const liveComponent = angular.getComponent(element);
+      angular.applyChanges(liveComponent);
+    });
+
+    // user score updated
+    cy.get('#current-user').should('contain', 'cedric').and('contain', '1200');
 
     // logout
     cy.get('span.fa.fa-power-off').click();

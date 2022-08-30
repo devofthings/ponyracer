@@ -1,14 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
+import { environment } from '../environments/environment';
 import { UserService } from './user.service';
 import { UserModel } from './models/user.model';
 import { JwtInterceptor } from './jwt.interceptor';
+import { WsService } from './ws.service';
 
 describe('UserService', () => {
   let userService: UserService;
   let http: HttpTestingController;
   let jwtInterceptor: JwtInterceptor;
+  const wsService = jasmine.createSpyObj<WsService>('WsService', ['connect']);
 
   const user = {
     id: 1,
@@ -20,7 +23,8 @@ describe('UserService', () => {
 
   beforeEach(() =>
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule]
+      imports: [HttpClientTestingModule],
+      providers: [{ provide: WsService, useValue: wsService }]
     })
   );
 
@@ -36,7 +40,7 @@ describe('UserService', () => {
     let actualUser: UserModel | undefined;
     userService.register(user.login, 'password', 1986).subscribe(fetchedUser => (actualUser = fetchedUser));
 
-    const req = http.expectOne({ method: 'POST', url: 'https://ponyracer.ninja-squad.com/api/users' });
+    const req = http.expectOne({ method: 'POST', url: `${environment.baseUrl}/api/users` });
     expect(req.request.body).toEqual({ login: user.login, password: 'password', birthYear: 1986 });
     req.flush(user);
 
@@ -51,7 +55,7 @@ describe('UserService', () => {
     let actualUser: UserModel | undefined;
     userService.authenticate(credentials).subscribe(fetchedUser => (actualUser = fetchedUser));
 
-    const req = http.expectOne({ method: 'POST', url: 'https://ponyracer.ninja-squad.com/api/users/authentication' });
+    const req = http.expectOne({ method: 'POST', url: `${environment.baseUrl}/api/users/authentication` });
     expect(req.request.body).toEqual(credentials);
     req.flush(user);
 
@@ -101,5 +105,13 @@ describe('UserService', () => {
     expect(userService.userEvents.next).toHaveBeenCalledWith(null);
     expect(Storage.prototype.removeItem).toHaveBeenCalledWith('rememberMe');
     expect(jwtInterceptor.removeJwtToken).toHaveBeenCalled();
+  });
+
+  it('should subscribe to the score of the user', () => {
+    const userId = 1;
+
+    userService.scoreUpdates(userId);
+
+    expect(wsService.connect).toHaveBeenCalledWith(`/player/${userId}`);
   });
 });

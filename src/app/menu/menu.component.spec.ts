@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Router, RouterLinkWithHref } from '@angular/router';
 import { By } from '@angular/platform-browser';
@@ -11,16 +11,17 @@ import { UserModel } from '../models/user.model';
 describe('MenuComponent', () => {
   const userService = {
     userEvents: new Subject<UserModel>(),
-    logout: () => {}
+    logout: () => {},
+    scoreUpdates: (userId: number) => {}
   } as UserService;
 
-  beforeEach(() => {
+  beforeEach(() =>
     TestBed.configureTestingModule({
       imports: [RouterTestingModule],
       declarations: [MenuComponent],
       providers: [{ provide: UserService, useValue: userService }]
-    });
-  });
+    })
+  );
 
   it('should have a `navbarCollapsed` field', () => {
     const fixture = TestBed.createComponent(MenuComponent);
@@ -88,18 +89,46 @@ describe('MenuComponent', () => {
     expect(linksAfterLogin.length).withContext('You should have two routerLink: one to the races, one to the home').toBe(2);
   });
 
-  it('should listen to userEvents in ngOnInit', () => {
+  it('should listen to userEvents and score updates in ngOnInit', fakeAsync(() => {
     const fixture = TestBed.createComponent(MenuComponent);
     fixture.componentInstance.ngOnInit();
 
-    const user = { login: 'cedric', money: 200 } as UserModel;
-
-    userService.userEvents.subscribe(() => {
-      expect(fixture.componentInstance.user).withContext('Your component should listen to the `userEvents` observable').toBe(user);
-    });
-
+    // emulate a login
+    const scoreUpdates = new Subject<UserModel>();
+    spyOn(userService, 'scoreUpdates').and.returnValue(scoreUpdates);
+    const user = { id: 1, login: 'cedric', money: 200 } as UserModel;
     userService.userEvents.next(user);
-  });
+    tick();
+
+    expect(fixture.componentInstance.user).withContext('Your component should listen to the `userEvents` observable on login').toBe(user);
+    expect(userService.scoreUpdates).toHaveBeenCalledWith(user.id);
+    tick();
+
+    // emulate a score update
+    user.money = 300;
+    scoreUpdates.next(user);
+    tick();
+
+    expect(fixture.componentInstance.user!.money).withContext('Your component should listen to the `scoreUpdates` observable').toBe(300);
+
+    // emulate an error
+    scoreUpdates.error('You should catch potential errors on score updates with a `.catch()`');
+    tick();
+    expect(fixture.componentInstance.user!.money).withContext('Your component should catch error on score updates').toBe(300);
+
+    // emulate a score update
+    user.money = 400;
+    scoreUpdates.next(user);
+    tick();
+
+    expect(fixture.componentInstance.user!.money).withContext('Your component should catch error on score updates').toBe(400);
+
+    // emulate a logout
+    userService.userEvents.next(null);
+    tick();
+
+    expect(fixture.componentInstance.user).withContext('Your component should listen to the `userEvents` observable on logout').toBe(null);
+  }));
 
   it('should display the user if logged', () => {
     const fixture = TestBed.createComponent(MenuComponent);
